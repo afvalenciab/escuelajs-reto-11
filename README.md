@@ -15,6 +15,85 @@ npm install
 npm run dev
 ```
 
+## Documentación
+
+### SeedUsers.js
+
+Ejecutar el archivo 'SeedUsers.js' para crear 3 usuarios de prueba para validar el funcionamiento de la API.
+Ejecutar con el siguiente comando:
+```
+DEBUG=app:* && node src/scripts/mongo/seedUsers.js
+```
+
+### Archivo routes/auth.js
+
+Se crea el archivo reoutes/auth.js para el manejar el sign-in y sign up de la aplicación.
+En el endpoint sig-in se utiliza la estrategia 'Basic' para realizar una autenticación con usuario y contraseña.
+
+### Archivo Services/users.js
+
+Se crear el archivo users.js para manejar los servicios de los usuarios en el cual se implementa el CRUD.
+
+```javascript
+  async getUser({ email }) {
+    const [user] = await this.mongoDB.getAll(this.collection, { email });
+    return user;
+  }
+
+  async createUser({ user }) {
+    const { name, email, password, isAdmin } = user;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const createdUserId = await this.mongoDB.create(this.collection, {
+      name,
+      email,
+      password: hashedPassword,
+      isAdmin: Boolean(isAdmin)
+    }); 
+    
+    return createdUserId;
+  }
+
+  async getOrCreateUser({ user }) {
+    const queriedUser = await this.getUser({ email: user.email });
+
+    if(queriedUser) {
+      return queriedUser;
+    }
+
+    await this.createUser({ user });
+    return await this.getUser({ email: user.email });
+  }
+```
+
+### Directorio Utils
+
+En este directorio se crean las estrategias de autenticación 'basic' y 'jwt' para el manejo de seguridad de la aplicación.
+En la estrategia 'jwt', se utiliza un 'BearerToken', por lo tanto se debe enviar este token en cada petición.
+
+Se crea un middleware llamado 'authValidationHandler', para validar los permisos del usuario.
+
+### Archivo .env
+
+Variables de entorno requeridas para el funcionamiento de la aplicación:
+```
+//CONFIG
+PORT=3000
+CORS=*
+DB_USER=
+DB_PASSWORD=
+DB_HOST=
+DB_NAME=
+
+//USERS
+DEFAULT_ADMIN_PASSWORD=
+DEFAULT_USER_PASSWORD=
+
+//AUTH
+AUTH_JWT_SECRET=
+```
+
 ## RETO
 
 ### Primer problema
